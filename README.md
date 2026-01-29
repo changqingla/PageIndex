@@ -176,21 +176,27 @@ OPENAI_API_BASE=http://localhost:11434/v1  # Your custom endpoint
 - **Together AI**: `https://api.together.xyz/v1`
 - **Groq**: `https://api.groq.com/openai/v1`
 
-**Example with Ollama:**
+**Quick Start with Ollama (5 minutes):**
 
 ```bash
 # 1. Install and start Ollama
-ollama pull qwen2.5:72b
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull qwen2.5:32b
 
 # 2. Configure PageIndex
 echo "CHATGPT_API_KEY=ollama" > .env
 echo "OPENAI_API_BASE=http://localhost:11434/v1" >> .env
 
-# 3. Run with custom model
-python3 run_pageindex.py --pdf_path document.pdf --model qwen2.5:72b
+# 3. Test configuration
+python3 scripts/test_custom_model.py --model qwen2.5:32b
+
+# 4. Run PageIndex
+python3 run_pageindex.py --pdf_path document.pdf --model qwen2.5:32b
 ```
 
-📖 See [CUSTOM_MODELS.md](docs/CUSTOM_MODELS.md) for detailed configuration guides.
+📖 See detailed guides:
+- [QUICK_START_OLLAMA.md](docs/QUICK_START_OLLAMA.md) - 5-minute Ollama setup
+- [CUSTOM_MODELS.md](docs/CUSTOM_MODELS.md) - All supported services and configuration
 
 </details>
 

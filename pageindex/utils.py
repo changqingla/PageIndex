@@ -17,8 +17,13 @@ import yaml
 from pathlib import Path
 from types import SimpleNamespace as config
 
-CHATGPT_API_KEY = os.getenv("CHATGPT_API_KEY")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")  # Support for custom API endpoints
+def get_api_key():
+    """Get API key from environment variables."""
+    return os.getenv("CHATGPT_API_KEY") or os.getenv("OPENAI_API_KEY")
+
+def get_api_base():
+    """Get API base URL from environment variables."""
+    return os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
 
 def count_tokens(text, model=None):
     """Count tokens using tiktoken. Falls back to character-based estimation for unsupported models."""
@@ -40,8 +45,14 @@ def count_tokens(text, model=None):
             # Rough estimation: ~4 characters per token for English text
             return len(text) // 4
 
-def ChatGPT_API_with_finish_reason(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE, chat_history=None):
+def ChatGPT_API_with_finish_reason(model, prompt, api_key=None, base_url=None, chat_history=None):
     max_retries = 10
+    # Get API key and base URL from environment if not provided
+    if api_key is None:
+        api_key = get_api_key()
+    if base_url is None:
+        base_url = get_api_base()
+    
     # Create client with optional base_url for custom endpoints
     client_kwargs = {"api_key": api_key}
     if base_url:
@@ -77,8 +88,14 @@ def ChatGPT_API_with_finish_reason(model, prompt, api_key=CHATGPT_API_KEY, base_
 
 
 
-def ChatGPT_API(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE, chat_history=None):
+def ChatGPT_API(model, prompt, api_key=None, base_url=None, chat_history=None):
     max_retries = 10
+    # Get API key and base URL from environment if not provided
+    if api_key is None:
+        api_key = get_api_key()
+    if base_url is None:
+        base_url = get_api_base()
+    
     # Create client with optional base_url for custom endpoints
     client_kwargs = {"api_key": api_key}
     if base_url:
@@ -110,8 +127,14 @@ def ChatGPT_API(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE
                 return "Error"
             
 
-async def ChatGPT_API_async(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE):
+async def ChatGPT_API_async(model, prompt, api_key=None, base_url=None):
     max_retries = 10
+    # Get API key and base URL from environment if not provided
+    if api_key is None:
+        api_key = get_api_key()
+    if base_url is None:
+        base_url = get_api_base()
+    
     messages = [{"role": "user", "content": prompt}]
     # Create client kwargs with optional base_url for custom endpoints
     client_kwargs = {"api_key": api_key}

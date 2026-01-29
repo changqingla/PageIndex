@@ -10,8 +10,8 @@ if __name__ == "__main__":
     parser.add_argument('--pdf_path', type=str, help='Path to the PDF file')
     parser.add_argument('--md_path', type=str, help='Path to the Markdown file')
 
-    parser.add_argument('--model', type=str, default='gpt-4o-2024-11-20', help='Model to use')
-    parser.add_argument('--api-base-url', type=str, default=None,
+    parser.add_argument('--model', type=str, default='Qwen3-30B-A3B-Instruct-2507', help='Model to use')
+    parser.add_argument('--api-base-url', type=str, default="https://llm.image-derivative.com/open-api/maas/admin/v1",
                       help='Custom API base URL for OpenAI-compatible endpoints (e.g., http://localhost:11434/v1 for Ollama)')
 
     parser.add_argument('--toc-check-pages', type=int, default=20, 
