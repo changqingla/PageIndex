@@ -11,18 +11,25 @@ import asyncio
 import pymupdf
 from io import BytesIO
 from dotenv import load_dotenv
+
 load_dotenv()
-import logging
 import yaml
 from pathlib import Path
 from types import SimpleNamespace as config
+import re
 
-def get_api_key():
-    """Get API key from environment variables."""
+def get_api_key(opt=None):
+    """Get API key from opt config or environment variables."""
+    # Priority: opt.api_key > environment variables
+    if opt and hasattr(opt, 'api_key') and opt.api_key:
+        return opt.api_key
     return os.getenv("CHATGPT_API_KEY") or os.getenv("OPENAI_API_KEY")
 
-def get_api_base():
-    """Get API base URL from environment variables."""
+def get_api_base(opt=None):
+    """Get API base URL from opt config or environment variables."""
+    # Priority: opt.api_base_url > environment variables
+    if opt and hasattr(opt, 'api_base_url') and opt.api_base_url:
+        return opt.api_base_url
     return os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
 
 def count_tokens(text, model=None):
@@ -45,13 +52,14 @@ def count_tokens(text, model=None):
             # Rough estimation: ~4 characters per token for English text
             return len(text) // 4
 
-def ChatGPT_API_with_finish_reason(model, prompt, api_key=None, base_url=None, chat_history=None):
+def ChatGPT_API_with_finish_reason(model, prompt, api_key=None, base_url=None, chat_history=None, opt=None):
     max_retries = 10
-    # Get API key and base URL from environment if not provided
+    # Get API key and base URL from opt or environment if not provided
+    # Priority: explicit params > opt config > environment variables
     if api_key is None:
-        api_key = get_api_key()
+        api_key = get_api_key(opt)
     if base_url is None:
-        base_url = get_api_base()
+        base_url = get_api_base(opt)
     
     # Create client with optional base_url for custom endpoints
     client_kwargs = {"api_key": api_key}
@@ -88,13 +96,14 @@ def ChatGPT_API_with_finish_reason(model, prompt, api_key=None, base_url=None, c
 
 
 
-def ChatGPT_API(model, prompt, api_key=None, base_url=None, chat_history=None):
+def ChatGPT_API(model, prompt, api_key=None, base_url=None, chat_history=None, opt=None):
     max_retries = 10
-    # Get API key and base URL from environment if not provided
+    # Get API key and base URL from opt or environment if not provided
+    # Priority: explicit params > opt config > environment variables
     if api_key is None:
-        api_key = get_api_key()
+        api_key = get_api_key(opt)
     if base_url is None:
-        base_url = get_api_base()
+        base_url = get_api_base(opt)
     
     # Create client with optional base_url for custom endpoints
     client_kwargs = {"api_key": api_key}
@@ -127,13 +136,14 @@ def ChatGPT_API(model, prompt, api_key=None, base_url=None, chat_history=None):
                 return "Error"
             
 
-async def ChatGPT_API_async(model, prompt, api_key=None, base_url=None):
+async def ChatGPT_API_async(model, prompt, api_key=None, base_url=None, opt=None):
     max_retries = 10
-    # Get API key and base URL from environment if not provided
+    # Get API key and base URL from opt or environment if not provided
+    # Priority: explicit params > opt config > environment variables
     if api_key is None:
-        api_key = get_api_key()
+        api_key = get_api_key(opt)
     if base_url is None:
-        base_url = get_api_base()
+        base_url = get_api_base(opt)
     
     messages = [{"role": "user", "content": prompt}]
     # Create client kwargs with optional base_url for custom endpoints
@@ -654,20 +664,20 @@ def add_node_text_with_labels(node, pdf_pages):
     return
 
 
-async def generate_node_summary(node, model=None):
+async def generate_node_summary(node, model=None, opt=None):
     prompt = f"""You are given a part of a document, your task is to generate a description of the partial document about what are main points covered in the partial document.
 
     Partial Document Text: {node['text']}
     
     Directly return the description, do not include any other text.
     """
-    response = await ChatGPT_API_async(model, prompt)
+    response = await ChatGPT_API_async(model, prompt, opt=opt)
     return response
 
 
-async def generate_summaries_for_structure(structure, model=None):
+async def generate_summaries_for_structure(structure, model=None, opt=None):
     nodes = structure_to_list(structure)
-    tasks = [generate_node_summary(node, model=model) for node in nodes]
+    tasks = [generate_node_summary(node, model=model, opt=opt) for node in nodes]
     summaries = await asyncio.gather(*tasks)
     
     for node, summary in zip(nodes, summaries):
@@ -698,7 +708,7 @@ def create_clean_structure_for_description(structure):
         return structure
 
 
-def generate_doc_description(structure, model=None):
+def generate_doc_description(structure, model=None, opt=None):
     prompt = f"""Your are an expert in generating descriptions for a document.
     You are given a structure of a document. Your task is to generate a one-sentence description for the document, which makes it easy to distinguish the document from other documents.
         
@@ -706,7 +716,7 @@ def generate_doc_description(structure, model=None):
     
     Directly return the description, do not include any other text.
     """
-    response = ChatGPT_API(model, prompt)
+    response = ChatGPT_API(model, prompt, opt=opt)
     return response
 
 

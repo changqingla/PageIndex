@@ -120,7 +120,8 @@ if __name__ == "__main__":
             model=opt.model,
             if_add_doc_description=opt.if_add_doc_description,
             if_add_node_text=opt.if_add_node_text,
-            if_add_node_id=opt.if_add_node_id
+            if_add_node_id=opt.if_add_node_id,
+            opt=opt
         ))
         
         print('Parsing done, saving to file...')
