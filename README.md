@@ -155,6 +155,45 @@ Create a `.env` file in the root directory and add your API key:
 CHATGPT_API_KEY=your_openai_key_here
 ```
 
+<details>
+<summary><strong>🔧 Using Custom OpenAI-Compatible Models (Ollama, vLLM, etc.)</strong></summary>
+<br>
+
+PageIndex supports any OpenAI-compatible API endpoint. To use custom models:
+
+```bash
+# .env file
+CHATGPT_API_KEY=your_api_key
+OPENAI_API_BASE=http://localhost:11434/v1  # Your custom endpoint
+```
+
+**Supported Services:**
+- **Ollama** (local): `http://localhost:11434/v1`
+- **vLLM** (local/remote): `http://localhost:8000/v1`
+- **LM Studio** (local): `http://localhost:1234/v1`
+- **Azure OpenAI**: `https://your-resource.openai.azure.com/openai/deployments/your-deployment`
+- **OpenRouter**: `https://openrouter.ai/api/v1`
+- **Together AI**: `https://api.together.xyz/v1`
+- **Groq**: `https://api.groq.com/openai/v1`
+
+**Example with Ollama:**
+
+```bash
+# 1. Install and start Ollama
+ollama pull qwen2.5:72b
+
+# 2. Configure PageIndex
+echo "CHATGPT_API_KEY=ollama" > .env
+echo "OPENAI_API_BASE=http://localhost:11434/v1" >> .env
+
+# 3. Run with custom model
+python3 run_pageindex.py --pdf_path document.pdf --model qwen2.5:72b
+```
+
+📖 See [CUSTOM_MODELS.md](docs/CUSTOM_MODELS.md) for detailed configuration guides.
+
+</details>
+
 ### 3. Run PageIndex on your PDF
 
 ```bash
@@ -167,7 +206,8 @@ python3 run_pageindex.py --pdf_path /path/to/your/document.pdf
 You can customize the processing with additional optional arguments:
 
 ```
---model                 OpenAI model to use (default: gpt-4o-2024-11-20)
+--model                 Model to use (default: gpt-4o-2024-11-20)
+                       Can be any OpenAI model or custom model name (e.g., qwen2.5:72b for Ollama)
 --toc-check-pages       Pages to check for table of contents (default: 20)
 --max-pages-per-node    Max pages per node (default: 10)
 --max-tokens-per-node   Max tokens per node (default: 20000)

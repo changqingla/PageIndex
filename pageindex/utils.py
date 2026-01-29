@@ -18,17 +18,36 @@ from pathlib import Path
 from types import SimpleNamespace as config
 
 CHATGPT_API_KEY = os.getenv("CHATGPT_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")  # Support for custom API endpoints
 
 def count_tokens(text, model=None):
+    """Count tokens using tiktoken. Falls back to character-based estimation for unsupported models."""
     if not text:
         return 0
-    enc = tiktoken.encoding_for_model(model)
-    tokens = enc.encode(text)
-    return len(tokens)
+    
+    try:
+        enc = tiktoken.encoding_for_model(model)
+        tokens = enc.encode(text)
+        return len(tokens)
+    except KeyError:
+        # For custom models not in tiktoken registry, use cl100k_base encoding (GPT-4 tokenizer)
+        # or fall back to character-based estimation
+        try:
+            enc = tiktoken.get_encoding("cl100k_base")
+            tokens = enc.encode(text)
+            return len(tokens)
+        except:
+            # Rough estimation: ~4 characters per token for English text
+            return len(text) // 4
 
-def ChatGPT_API_with_finish_reason(model, prompt, api_key=CHATGPT_API_KEY, chat_history=None):
+def ChatGPT_API_with_finish_reason(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE, chat_history=None):
     max_retries = 10
-    client = openai.OpenAI(api_key=api_key)
+    # Create client with optional base_url for custom endpoints
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    client = openai.OpenAI(**client_kwargs)
+    
     for i in range(max_retries):
         try:
             if chat_history:
@@ -51,16 +70,21 @@ def ChatGPT_API_with_finish_reason(model, prompt, api_key=CHATGPT_API_KEY, chat_
             print('************* Retrying *************')
             logging.error(f"Error: {e}")
             if i < max_retries - 1:
-                time.sleep(1)  # Wait for 1秒 before retrying
+                time.sleep(1)  # Wait for 1 second before retrying
             else:
                 logging.error('Max retries reached for prompt: ' + prompt)
                 return "Error"
 
 
 
-def ChatGPT_API(model, prompt, api_key=CHATGPT_API_KEY, chat_history=None):
+def ChatGPT_API(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE, chat_history=None):
     max_retries = 10
-    client = openai.OpenAI(api_key=api_key)
+    # Create client with optional base_url for custom endpoints
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    client = openai.OpenAI(**client_kwargs)
+    
     for i in range(max_retries):
         try:
             if chat_history:
@@ -80,18 +104,23 @@ def ChatGPT_API(model, prompt, api_key=CHATGPT_API_KEY, chat_history=None):
             print('************* Retrying *************')
             logging.error(f"Error: {e}")
             if i < max_retries - 1:
-                time.sleep(1)  # Wait for 1秒 before retrying
+                time.sleep(1)  # Wait for 1 second before retrying
             else:
                 logging.error('Max retries reached for prompt: ' + prompt)
                 return "Error"
             
 
-async def ChatGPT_API_async(model, prompt, api_key=CHATGPT_API_KEY):
+async def ChatGPT_API_async(model, prompt, api_key=CHATGPT_API_KEY, base_url=OPENAI_API_BASE):
     max_retries = 10
     messages = [{"role": "user", "content": prompt}]
+    # Create client kwargs with optional base_url for custom endpoints
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    
     for i in range(max_retries):
         try:
-            async with openai.AsyncOpenAI(api_key=api_key) as client:
+            async with openai.AsyncOpenAI(**client_kwargs) as client:
                 response = await client.chat.completions.create(
                     model=model,
                     messages=messages,
@@ -102,7 +131,7 @@ async def ChatGPT_API_async(model, prompt, api_key=CHATGPT_API_KEY):
             print('************* Retrying *************')
             logging.error(f"Error: {e}")
             if i < max_retries - 1:
-                await asyncio.sleep(1)  # Wait for 1s before retrying
+                await asyncio.sleep(1)  # Wait for 1 second before retrying
             else:
                 logging.error('Max retries reached for prompt: ' + prompt)
                 return "Error"  
